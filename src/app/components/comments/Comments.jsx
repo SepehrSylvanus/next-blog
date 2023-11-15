@@ -1,9 +1,30 @@
-"use client"
+"use client";
 import Link from "next/link";
 import styles from "./comments.module.css";
 import Image from "next/image";
-const Comments = () => {
-  const status = "authenticated";
+import useSWR from "swr";
+import { useSession } from "next-auth/react";
+
+const fetcher = async (url) => {
+  const res = await fetch(url);
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    const error = new Error(data.message);
+    throw error;
+  }
+
+  return data;
+};
+
+const Comments = ({ postSlug }) => {
+  const {status} = useSession();
+
+  const { data, isLoading } = useSWR(
+    `http://localhost:3000/api/comments?postSlug=${postSlug}`, fetcher
+  );
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Comments</h1>
@@ -17,56 +38,27 @@ const Comments = () => {
         <Link href={"/"}>Login to write a comment</Link>
       )}
       <div className={styles.comments}>
-        <div className={styles.comment}>
+      {isLoading ? 'Loading...' : data.map(item => (
+          <div className={styles.comment} key={item._id}>
           <div className={styles.user}>
-            <Image src={'/p1.jpeg'} alt="" width={50}height={50} className={styles.image}/>
+            { item?.user?.image && <Image
+              src={item.user.image}
+              alt=""
+              width={50}
+              height={50}
+              className={styles.image}
+            />}
             <div className={styles.userInfo}>
-              <span className={styles.username}>John Dee</span>
-              <span className={styles.date}>01.01.2023</span>
+              <span className={styles.username}>{item.user.name}</span>
+              <span className={styles.date}>{item.createdAt}</span>
             </div>
           </div>
-          <p className={styles.desc}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur quaerat blanditiis amet quo voluptas dolores alias nam odio unde in earum commodi, aliquam corrupti a tempora possimus placeat architecto voluptates!</p>
+          <p className={styles.desc}>
+          {item.desc}
+          </p>
         </div>
-        <div className={styles.comment}>
-          <div className={styles.user}>
-            <Image src={'/p1.jpeg'} alt="" width={50}height={50} className={styles.image}/>
-            <div className={styles.userInfo}>
-              <span className={styles.username}>John Dee</span>
-              <span className={styles.date}>01.01.2023</span>
-            </div>
-          </div>
-          <p className={styles.desc}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur quaerat blanditiis amet quo voluptas dolores alias nam odio unde in earum commodi, aliquam corrupti a tempora possimus placeat architecto voluptates!</p>
-        </div>
-        <div className={styles.comment}>
-          <div className={styles.user}>
-            <Image src={'/p1.jpeg'} alt="" width={50}height={50} className={styles.image}/>
-            <div className={styles.userInfo}>
-              <span className={styles.username}>John Dee</span>
-              <span className={styles.date}>01.01.2023</span>
-            </div>
-          </div>
-          <p className={styles.desc}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur quaerat blanditiis amet quo voluptas dolores alias nam odio unde in earum commodi, aliquam corrupti a tempora possimus placeat architecto voluptates!</p>
-        </div>
-        <div className={styles.comment}>
-          <div className={styles.user}>
-            <Image src={'/p1.jpeg'} alt="" width={50}height={50} className={styles.image}/>
-            <div className={styles.userInfo}>
-              <span className={styles.username}>John Dee</span>
-              <span className={styles.date}>01.01.2023</span>
-            </div>
-          </div>
-          <p className={styles.desc}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur quaerat blanditiis amet quo voluptas dolores alias nam odio unde in earum commodi, aliquam corrupti a tempora possimus placeat architecto voluptates!</p>
-        </div>
-        <div className={styles.comment}>
-          <div className={styles.user}>
-            <Image src={'/p1.jpeg'} alt="" width={50}height={50} className={styles.image}/>
-            <div className={styles.userInfo}>
-              <span className={styles.username}>John Dee</span>
-              <span className={styles.date}>01.01.2023</span>
-            </div>
-          </div>
-          <p className={styles.desc}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur quaerat blanditiis amet quo voluptas dolores alias nam odio unde in earum commodi, aliquam corrupti a tempora possimus placeat architecto voluptates!</p>
-        </div>
+    
+      ))}
       </div>
     </div>
   );
