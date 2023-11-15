@@ -2,7 +2,7 @@
 import Image from "next/image";
 import styles from "./writePage.module.css";
 import { useEffect, useState } from "react";
-import ReactQuill from "react-quill";
+
 import "react-quill/dist/quill.bubble.css";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -13,10 +13,13 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { app } from "../utils/firebase";
+import dynamic from "next/dynamic";
 
 const storage = getStorage(app);
 const WritePage = () => {
-  const { data, status } = useSession();
+  const { status } = useSession();
+
+  const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
   const router = useRouter();
   const [file, setFile] = useState(null);
@@ -67,31 +70,27 @@ const WritePage = () => {
   }
 
   const slugify = (str) =>
-  str
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    str
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
+  const handleSubmit = async () => {
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      body: JSON.stringify({
+        title,
+        desc: value,
+        img: media,
+        slug: slugify(title),
+        catSlug: "travel",
+      }),
+    });
 
-
-const handleSubmit =async ()=>{
-const res = await fetch('/api/posts',{
-  method: "POST",
-  body: JSON.stringify({
-    title,
-    desc: value,
-    img: media,
-     slug: slugify(title),
-     catSlug: 'travel'
-  })
-})
-
-console.log(res)
-}
-
-
+    console.log(res);
+  };
 
   return (
     <div className={styles.container}>
@@ -141,7 +140,9 @@ console.log(res)
           placeholder="Tell your story..."
         />
       </div>
-      <button className={styles.publish} onClick={handleSubmit}>Publish</button>
+      <button className={styles.publish} onClick={handleSubmit}>
+        Publish
+      </button>
     </div>
   );
 };
